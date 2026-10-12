@@ -1,0 +1,27 @@
+services:
+  assistant:
+    build: .
+    image: enfactum-ai-assistant:latest
+    env_file: .env
+    environment:
+      PORT: "8080"
+    ports:
+      - "${PORT:-8080}:8080"
+    volumes:
+      - assistant-data:/app/data
+      - ./config:/app/config:ro
+    restart: unless-stopped
+
+  # Optional fully-local LLM. Start with: docker compose --profile local-llm up -d
+  # then set LLM_BASE_URL=http://ollama:11434/v1, LLM_MODEL=qwen2.5:14b (or another tool-calling model)
+  # and run: docker compose exec ollama ollama pull qwen2.5:14b
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["local-llm"]
+    volumes:
+      - ollama-models:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  assistant-data:
+  ollama-models:

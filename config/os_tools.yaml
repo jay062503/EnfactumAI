@@ -1,0 +1,63 @@
+# =====================================================================================================
+# Enfactum OS tools (production).
+#
+# Each entry exposes ONE existing, read-only Enfactum OS endpoint to the assistant. The call is made with the
+# end user's own token/cookies, so Laravel middleware, policies and scopes stay the security boundary.
+#
+# Rules enforced at startup:
+#   - method must be GET
+#   - path is relative to base_url (no absolute URLs)
+#   - parameters must be a valid JSON Schema
+#
+# Only add endpoints that really exist in Enfactum OS (check `php artisan route:list --path=api`).
+# Prefer endpoints that return Laravel API Resources, and list only the fields the assistant needs in
+# `response.fields`. Keys that look like secrets (password, token, api_key...) are always redacted.
+# =====================================================================================================
+base_url: ${OS_BASE_URL}
+timeout_seconds: 10
+
+tools: []
+
+# ---- Template (copy into `tools:` and adapt to a REAL route) ----------------------------------------
+#  - name: search_employees                 # [a-zA-Z0-9_], unique
+#    label: Employee directory              # shown to the user while the tool runs
+#    description: >                         # tells the model WHEN to use it; be specific
+#      Look up employees by name, email or department.
+#    method: GET
+#    path: /api/employees                   # path params allowed: /api/projects/{project_id}
+#    required_permission: employees.view    # optional pre-filter; the OS still enforces access
+#    parameters:                            # JSON Schema for the arguments the model may send
+#      type: object
+#      properties:
+#        search: {type: string, description: "Name or email"}
+#      required: [search]
+#    query: [search]                        # optional; defaults to all non-path arguments
+#    response:
+#      root: data                           # dot-path to the records (Laravel resources use `data`)
+#      total: meta.total                    # optional dot-path to the total count
+#      fields: [id, name, email, department.name, designation]   # allow-list (dot-paths supported)
+#      max_items: 25
+#    enabled: true
+
+# ---- Write actions (optional; AI_ACTIONS_ENABLED=true) ----------------------------------------------
+# The assistant can only PREPARE these. The employee sees a confirmation card with the exact values and must
+# click Confirm; only then is the request sent, with the employee's own token, so Laravel validation and
+# policies still decide. required_permission is mandatory. Start with low-risk, reversible actions.
+actions: []
+#  - name: create_leave_request
+#    label: Apply for leave
+#    description: Submit a leave request for the current employee.
+#    method: POST                           # POST | PUT | PATCH | DELETE
+#    path: /api/leave-requests              # path params allowed: /api/tasks/{task_id}
+#    required_permission: leave.create
+#    summary: "{leave_type} leave from {start_date} to {end_date}"   # shown on the confirmation card
+#    field_labels: {leave_type: Leave type, start_date: From, end_date: To}
+#    success_message: Leave request submitted for approval.
+#    parameters:                            # JSON Schema; only declared properties are sent as the JSON body
+#      type: object                         # keep to type/description/enum/required/items for Gemini compatibility
+#      properties:
+#        leave_type: {type: string, enum: [annual, sick, casual]}
+#        start_date: {type: string, description: "YYYY-MM-DD"}
+#        end_date: {type: string, description: "YYYY-MM-DD"}
+#        reason: {type: string}
+#      required: [leave_type, start_date, end_date]

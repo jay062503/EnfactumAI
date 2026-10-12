@@ -1,0 +1,124 @@
+# Tools against the bundled mock OS (MOCK_OS_ENABLED=true). Same format as config/os_tools.yaml.
+base_url: ${OS_BASE_URL:-http://127.0.0.1:8080/mock-os}
+timeout_seconds: 8
+
+tools:
+  - name: search_employees
+    label: Employee directory
+    description: >
+      Look up Enfactum employees by name, email, designation or department. Returns directory details;
+      compensation is only included if Enfactum OS allows it for this user.
+    method: GET
+    path: /api/employees
+    required_permission: employees.view
+    parameters:
+      type: object
+      properties:
+        search: {type: string, description: "Name, email or designation to search for"}
+        department: {type: string, description: "Optional department filter"}
+    response:
+      root: data
+      total: meta.total
+      fields: [id, name, email, department, designation, manager, location, salary]
+      max_items: 25
+
+  - name: search_projects
+    label: Projects
+    description: >
+      List or search Enfactum projects (name, client, status, manager, dates, team; budget only if permitted).
+      Enfactum OS only returns projects the user is allowed to see.
+    method: GET
+    path: /api/projects
+    required_permission: projects.view
+    parameters:
+      type: object
+      properties:
+        search: {type: string, description: "Project or client name"}
+        status: {type: string, enum: [planning, proposal, in_progress, on_hold, completed]}
+    response:
+      root: data
+      total: meta.total
+      fields: [id, name, client, status, manager, start_date, end_date, budget, team]
+      max_items: 25
+
+  - name: search_clients
+    label: Clients
+    description: Search Enfactum clients and prospects by name or industry.
+    method: GET
+    path: /api/clients
+    required_permission: clients.view
+    parameters:
+      type: object
+      properties:
+        search: {type: string, description: "Client name or industry"}
+    response:
+      root: data
+      total: meta.total
+      fields: [id, name, industry, account_manager, status]
+      max_items: 25
+
+  - name: my_leave_requests
+    label: My leave requests
+    description: List the current employee's own leave requests and their status.
+    method: GET
+    path: /api/leave-requests
+    required_permission: leave.view
+    parameters: {type: object, properties: {}}
+    response:
+      root: data
+      fields: [id, leave_type, start_date, end_date, days, status, reason]
+
+  - name: my_tasks
+    label: My tasks
+    description: List tasks assigned to the current employee (optionally filtered by project or status).
+    method: GET
+    path: /api/tasks
+    required_permission: tasks.view
+    parameters:
+      type: object
+      properties:
+        project_id: {type: integer}
+        status: {type: string, enum: [todo, in_progress, done]}
+    response:
+      root: data
+      fields: [id, title, project, assignee, due_date, priority, status]
+
+# Write actions: the assistant only PREPARES them; the employee confirms in the UI, then the OS executes them
+# with the employee's own token (OS validation + policies apply).
+actions:
+  - name: create_leave_request
+    label: Apply for leave
+    description: Submit a leave request for the current employee.
+    method: POST
+    path: /api/leave-requests
+    required_permission: leave.create
+    summary: "{leave_type} leave from {start_date} to {end_date}"
+    field_labels: {leave_type: Leave type, start_date: From, end_date: To, reason: Reason}
+    success_message: Leave request submitted for approval.
+    parameters:
+      type: object
+      properties:
+        leave_type: {type: string, enum: [annual, sick, casual, unpaid, parental]}
+        start_date: {type: string, description: "First day of leave, YYYY-MM-DD"}
+        end_date: {type: string, description: "Last day of leave, YYYY-MM-DD"}
+        reason: {type: string, description: "Short reason (optional)"}
+      required: [leave_type, start_date, end_date]
+
+  - name: create_task
+    label: Create task
+    description: Create a task in a project the employee works on.
+    method: POST
+    path: /api/tasks
+    required_permission: tasks.create
+    summary: "\"{title}\" for {assignee}, due {due_date}"
+    field_labels: {project_id: Project ID, title: Title, assignee: Assignee, due_date: Due date, priority: Priority}
+    success_message: Task created.
+    parameters:
+      type: object
+      properties:
+        project_id: {type: integer, description: "ID from search_projects"}
+        title: {type: string, description: "Short task title"}
+        assignee: {type: string, description: "Employee full name (defaults to the current employee)"}
+        due_date: {type: string, description: "YYYY-MM-DD"}
+        priority: {type: string, enum: [low, medium, high]}
+      required: [project_id, title]

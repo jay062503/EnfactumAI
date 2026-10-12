@@ -1,0 +1,19 @@
+# Single local test identity for AUTH_MODE=demo only (fictional). In production the identity, user type, roles
+# and permissions come from Enfactum OS (AUTH_MODE=laravel or jwt) and this file is ignored.
+#
+# os_token is what the assistant forwards to the (mock) Enfactum OS; the OS decides what the token may see/do.
+# This employee can read the directory (without salaries), their own projects, clients, leave and tasks, can
+# apply for leave / create tasks (after confirming in the UI) and can manage the knowledge base for testing.
+# HR-only sample documents stay hidden from them.
+#
+# user_type: employee | client. The assistant is an employee-only app: client accounts get a 403.
+users:
+  - id: "103"
+    name: Priya Nair
+    title: Senior Project Manager
+    email: priya.nair@enfactum.example
+    user_type: employee
+    roles: [employee]
+    permissions: [employees.view, projects.view, clients.view, leave.view, leave.create, tasks.view, tasks.create,
+                  ai.documents.manage]
+    os_token: demo-token-employee

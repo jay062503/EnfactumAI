@@ -1,0 +1,12 @@
+# Seeded on first start when SEED_SAMPLE_DOCS=true and the knowledge base is empty.
+# These are FICTIONAL placeholders for the demo. Delete them and upload real Enfactum documents.
+documents:
+  - file: leave-policy.md
+    title: "SAMPLE – Leave & Time-off Policy"
+    visibility: {scope: all}
+  - file: it-security-policy.md
+    title: "SAMPLE – IT & Information Security Policy"
+    visibility: {scope: all}
+  - file: compensation-guidelines.md
+    title: "SAMPLE – Compensation Review Guidelines (HR only)"
+    visibility: {scope: restricted, roles: [hr_manager]}

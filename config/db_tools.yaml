@@ -1,0 +1,45 @@
+# =====================================================================================================
+# Company-database tools (optional). Active only when COMPANY_DB_DSN is set.
+#
+# Prefer Enfactum OS API tools (config/os_tools.yaml): they reuse Laravel policies automatically.
+# Use these ONLY for data that has no API yet, and connect with a READ-ONLY PostgreSQL role
+# (see docs/INTEGRATION_GUIDE.md, section 6B).
+#
+# Rules enforced at startup: single SELECT/WITH statement, no write/DDL keywords, every %(placeholder)s
+# declared in `parameters` (or one of the injected context values below).
+#
+# Injected automatically (cannot be supplied by the model):
+#   %(current_user_id)s     the employee's id from Enfactum OS
+#   %(current_user_email)s  the employee's email
+#
+# Write a literal % as %% (e.g. ILIKE '%%' || %(search)s || '%%').
+# Every query MUST enforce access itself (e.g. filter by current_user_id) - the database does not know
+# Enfactum's RBAC.
+# =====================================================================================================
+tools: []
+
+# ---- Examples (adapt table/column names to the real schema, then move under `tools:`) ----------------
+#  - name: my_leave_balance
+#    label: My leave balance
+#    description: The current employee's remaining leave days by leave type for this year.
+#    sql: |
+#      SELECT lt.name AS leave_type, lb.entitled_days, lb.used_days, lb.entitled_days - lb.used_days AS remaining
+#      FROM leave_balances lb JOIN leave_types lt ON lt.id = lb.leave_type_id
+#      WHERE lb.user_id = %(current_user_id)s AND lb.year = EXTRACT(YEAR FROM CURRENT_DATE)
+#    max_rows: 20
+#
+#  - name: search_vendors
+#    label: Vendors
+#    description: Search approved vendors by name or category.
+#    required_permission: vendors.view
+#    parameters:
+#      type: object
+#      properties:
+#        search: {type: string, maxLength: 100}
+#      required: [search]
+#    sql: |
+#      SELECT id, name, category, status, city
+#      FROM vendors
+#      WHERE deleted_at IS NULL AND (name ILIKE '%%' || %(search)s || '%%' OR category ILIKE '%%' || %(search)s || '%%')
+#      ORDER BY name
+#    max_rows: 25

@@ -1,0 +1,13 @@
+# Fully local embeddings (EMBEDDING_PROVIDER=local). Downloads a ~130 MB ONNX model on first use.
+fastembed>=0.3
+
+# Offline OCR (OCR_PROVIDER=tesseract). Also needs the tesseract binary:
+#   macOS: brew install tesseract   Ubuntu: apt-get install tesseract-ocr   Windows: UB-Mannheim installer
+pytesseract>=0.3.10
+
+# Company-database tools (COMPANY_DB_DSN, config/db_tools.yaml)
+psycopg[binary]>=3.1
+
+# Tests
+pytest>=8.0
+pytest-asyncio>=0.23
